@@ -1,12 +1,12 @@
 <?php
 header('Content-Type: application/json');
 
-$server = "localhost";
-$user = "root";
-$password = "";
-$database = "webdb"; // Database của bạn
+$servername = "sql111.infinityfree.com";
+$username = "if0_41378068";
+$password = "19102005duy123";
+$dbname = "if0_41378068_bonsaidb";
 
-$myconn = new mysqli($server, $user, $password, $database);
+$myconn = new mysqli($servername, $username, $password, $dbname);
 
 // Kiểm tra kết nối
 if ($myconn->connect_error) {
