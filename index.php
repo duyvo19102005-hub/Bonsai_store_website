@@ -68,7 +68,6 @@ $cart_count = count($cart_items);
 
 <!DOCTYPE html>
 <html>
-
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -148,104 +147,70 @@ $cart_count = count($cart_items);
             <div class="search-group">
               <form id="searchForm" method="get">
                 <div class="search-container">
-                  <div class="search-input-wrapper">
-                    <input type="search" placeholder="Tìm kiếm sản phẩm..." id="searchInput"
-                      name="search" class="search-input" />
-                    <button type="button" class="advanced-search-toggle" id="advanced-search-toggle"
-                      onclick="toggleAdvancedSearch()" title="Tìm kiếm nâng cao">
+                  <div class="search-input-wrapper" style="position: relative;">
+                    <input type="search" placeholder="Tìm kiếm sản phẩm..." id="searchInput" name="search" class="search-input" autocomplete="off" />
+                    
+                    <button type="button" class="advanced-search-toggle" id="advanced-search-toggle" onclick="toggleAdvancedSearch()" title="Tìm kiếm nâng cao">
                       <i class="fas fa-sliders-h"></i>
                     </button>
-                    <button type="submit" class="search-button" onclick="performSearch()"
-                      title="Tìm kiếm">
+                    <button type="submit" class="search-button" onclick="performSearch()" title="Tìm kiếm">
                       <i class="fas fa-search"></i>
                     </button>
+
+                    <div id="searchSuggestions" class="search-suggestions"></div>
                   </div>
                 </div>
 
-                <!-- Form tìm kiếm nâng cao được thiết kế lại -->
                 <div id="advancedSearchForm" class="advanced-search-panel" style="display: none">
                   <div class="advanced-search-header">
                     <h5>Tìm kiếm nâng cao</h5>
-                    <button type="button" class="close-advanced-search"
-                      onclick="toggleAdvancedSearch()">
+                    <button type="button" class="close-advanced-search" onclick="toggleAdvancedSearch()">
                       <i class="fas fa-times"></i>
                     </button>
                   </div>
 
-                  <!-- Panel tìm kiếm nâng cao  -->
                   <div class="search-filter-container" id="search-filter-container">
                     <div class="filter-group">
-                      <label for="categoryFilter">
-                        <i class="fas fa-leaf"></i> Phân loại sản phẩm
-                      </label>
+                      <label for="categoryFilter"><i class="fas fa-leaf"></i> Phân loại sản phẩm</label>
                       <select id="categoryFilter" name="category" class="form-select">
                         <option value="">Chọn phân loại</option>
                         <?php
-                        require_once './php-api/connectdb.php'; // Đường dẫn đúng tới file kết nối
-
-                        $conn = connect_db();
-                        $sql = "SELECT CategoryName FROM categories ORDER BY CategoryName ASC";
-                        $result = $conn->query($sql);
-
-                        if ($result && $result->num_rows > 0) {
-                          while ($row = $result->fetch_assoc()) {
-                            $categoryName = htmlspecialchars($row['CategoryName']);
-                            echo "<option value=\"$categoryName\">$categoryName</option>";
+                        require_once './php-api/connectdb.php';
+                        $conn_cat = connect_db();
+                        $conn_cat->set_charset("utf8mb4");
+                        $sql_cat_search = "SELECT CategoryName FROM categories ORDER BY CategoryName ASC";
+                        $res_cat = $conn_cat->query($sql_cat_search);
+                        if ($res_cat && $res_cat->num_rows > 0) {
+                          while ($r_cat = $res_cat->fetch_assoc()) {
+                            $cName = htmlspecialchars($r_cat['CategoryName']);
+                            echo "<option value=\"$cName\">$cName</option>";
                           }
                         } else {
                           echo '<option value="">Không có phân loại</option>';
                         }
-
-                        $conn->close();
+                        $conn_cat->close();
                         ?>
                       </select>
-
                     </div>
 
                     <div class="filter-group">
-                      <label for="priceRange">
-                        <i class="fas fa-tag"></i> Khoảng giá
-                      </label>
+                      <label for="priceRange"><i class="fas fa-tag"></i> Khoảng giá</label>
                       <div class="price-range-slider">
                         <div class="price-input-group">
-                          <input type="number" id="minPrice" name="minPrice" placeholder="Từ"
-                            min="0" />
+                          <input type="number" id="minPrice" name="minPrice" placeholder="Từ" min="0" />
                           <span class="price-separator">-</span>
-                          <input type="number" id="maxPrice" name="maxPrice" placeholder="Đến"
-                            min="0" />
+                          <input type="number" id="maxPrice" name="maxPrice" placeholder="Đến" min="0" />
                         </div>
-                        <!-- <div class="price-ranges">
-                          <button type="button" class="price-preset" onclick="setPrice(0, 200000)">
-                            Dưới 200k
-                          </button>
-                          <button type="button" class="price-preset" onclick="setPrice(200000, 500000)">
-                            200k - 500k
-                          </button>
-                          <button type="button" class="price-preset" onclick="setPrice(500000, 1000000)">
-                            500k - 1tr
-                          </button>
-                          <button type="button" class="price-preset" onclick="setPrice(1000000, 0)">
-                            Trên 1tr
-                          </button>
-                        </div> -->
                       </div>
                     </div>
 
                     <div class="filter-actions">
-                      <button type="submit" class="btn-search" onclick="performSearch()">
-                        <i class="fas fa-search"></i> Tìm kiếm
-                      </button>
-                      <button type="button" class="btn-reset" onclick="resetFilters()">
-                        <i class="fas fa-redo-alt"></i> Đặt lại
-                      </button>
+                      <button type="submit" class="btn-search" onclick="performSearch()"><i class="fas fa-search"></i> Tìm kiếm</button>
+                      <button type="button" class="btn-reset" onclick="resetFilters()"><i class="fas fa-redo-alt"></i> Đặt lại</button>
                     </div>
                   </div>
-
                   <div class="search-tips">
-                    <p>
-                      <i class="fas fa-lightbulb"></i> Mẹo: Kết hợp nhiều điều
-                      kiện để tìm kiếm chính xác hơn
-                    </p>
+                    <p><i class="fas fa-lightbulb"></i> Mẹo: Kết hợp nhiều điều kiện để tìm kiếm chính xác hơn</p>
                   </div>
                 </div>
               </form>
@@ -346,7 +311,7 @@ $cart_count = count($cart_items);
                     <a class="nav-link active" aria-current="page" href="index.php">Trang chủ</a>
                   </li>
                   <li class="nav-item">
-                    <a class="nav-link" href="#">Giới thiệu</a>
+                    <a class="nav-link" href="thong-tin.php?p=gioi-thieu">Giới thiệu</a>
                   </li>
                   <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button"
@@ -357,6 +322,7 @@ $cart_count = count($cart_items);
                       <?php
                       require_once './php-api/connectdb.php'; // hoặc đường dẫn đúng đến file connect của bạn
                       $conn = connect_db();
+                        $conn->set_charset("utf8mb4");
 
                       $sql = "SELECT CategoryID, CategoryName FROM categories ORDER BY CategoryID ASC";
                       $result = $conn->query($sql);
@@ -376,10 +342,10 @@ $cart_count = count($cart_items);
                     </ul>
                   </li>
                   <li class="nav-item">
-                    <a class="nav-link" href="#">Tin tức</a>
+                    <a class="nav-link" href="thong-tin.php?p=tin-tuc">Tin tức</a>
                   </li>
                   <li class="nav-item">
-                    <a class="nav-link" href="#">Liên hệ</a>
+                    <a class="nav-link" href="thong-tin.php?p=lien-he">Liên hệ</a>
                   </li>
                 </ul>
                 <!-- form tìm kiếm trên mobile  -->
@@ -404,27 +370,27 @@ $cart_count = count($cart_items);
                         <i class="fas fa-leaf"></i> Phân loại sản phẩm
                       </label>
                       <select id="categoryFilter-mobile" name="category" class="form-select">
-                        <option value="">Chọn phân loại</option>
-                        <?php
-                        require_once './php-api/connectdb.php'; // Đường dẫn đúng tới file kết nối
+  <option value="">Chọn phân loại</option>
+  <?php
+  require_once './php-api/connectdb.php'; 
 
-                        $conn = connect_db();
-                        $sql = "SELECT CategoryName FROM categories ORDER BY CategoryName ASC";
-                        $result = $conn->query($sql);
+  $conn = connect_db();
+  $conn->set_charset("utf8mb4"); // <--- CHÈN DÒNG NÀY ĐỂ FIX LỖI MENU MOBILE
 
-                        if ($result && $result->num_rows > 0) {
-                          while ($row = $result->fetch_assoc()) {
-                            $categoryName = htmlspecialchars($row['CategoryName']);
-                            echo "<option value=\"$categoryName\">$categoryName</option>";
-                          }
-                        } else {
-                          echo '<option value="">Không có phân loại</option>';
-                        }
+  $sql = "SELECT CategoryName FROM categories ORDER BY CategoryName ASC";
+  $result = $conn->query($sql);
 
-                        $conn->close();
-                        ?>
-                      </select>
-
+  if ($result && $result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+      $categoryName = htmlspecialchars($row['CategoryName']);
+      echo "<option value=\"$categoryName\">$categoryName</option>";
+    }
+  } else {
+    echo '<option value="">Không có phân loại</option>';
+  }
+  // Không đóng kết nối ở đây để bên dưới dùng tiếp
+  ?>
+</select>
                     </div>
 
                     <div class="filter-group">
@@ -487,7 +453,7 @@ $cart_count = count($cart_items);
           <li>
             <a href="index.php" style="font-weight: bold">Trang chủ</a>
           </li>
-          <li><a href="#">Giới thiệu</a></li>
+          <li><a href="thong-tin.php?p=gioi-thieu">Giới thiệu</a></li>
           <li>
             <div class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
@@ -517,8 +483,8 @@ $cart_count = count($cart_items);
               </ul>
             </div>
           </li>
-          <li><a href="">Tin tức</a></li>
-          <li><a href="">Liên hệ</a></li>
+          <li><a href="thong-tin.php?p=tin-tuc">Tin tức</a></li>
+          <li><a href="thong-tin.php?p=lien-he">Liên hệ</a></li>
         </ul>
       </div>
     </div>
@@ -531,41 +497,42 @@ $cart_count = count($cart_items);
     </div>
   </div>
 
-  <main>
-    <!-- DANH MỤC SẢN PHẨM -->
+<main>
     <?php
-    $host = 'localhost';
-    $user = 'root';
-    $password = '';
-    $dbname = 'c01db';
+    // Tạo một kết nối hoàn toàn độc lập cho phần thân trang
+    $servername_main = 'sql111.infinityfree.com';
+    $username_main = 'if0_41378068';
+    $password_main = '19102005duy123';
+    $dbname_main = 'if0_41378068_bonsaidb';
 
-    $conn = new mysqli($host, $user, $password, $dbname);
-    if ($conn->connect_error) {
-      die("Kết nối thất bại: " . $conn->connect_error);
-    }
+    $conn_main = new mysqli($servername_main, $username_main, $password_main, $dbname_main);
 
-    // Truy vấn: Lấy sản phẩm đầu tiên (MIN ProductID) trong mỗi danh mục có ít nhất 1 sản phẩm Status = 'appear'
-    $sql = "
-  SELECT p.*, c.CategoryName
-  FROM categories c
-  JOIN (
-    SELECT CategoryID, MIN(ProductID) AS MinProductID
-    FROM products
-    WHERE Status = 'appear'
-    GROUP BY CategoryID
-  ) AS sub ON c.CategoryID = sub.CategoryID
-  JOIN products p ON p.ProductID = sub.MinProductID
-  ORDER BY c.CategoryID;
-";
+    if (!$conn_main->connect_error) {
+        // ĐEO KÍNH TIẾNG VIỆT CHO KẾT NỐI NÀY
+        $conn_main->set_charset("utf8mb4");
+        $conn_main->query("SET SQL_BIG_SELECTS=1");
 
-    $result = $conn->query($sql);
-    $products = [];
-    if ($result && $result->num_rows > 0) {
-      while ($row = $result->fetch_assoc()) {
-        $products[] = $row;
-      }
-    }
-    $conn->close();
+        // Lấy dữ liệu 4 danh mục
+        $sql_cat = "
+          SELECT p.*, c.CategoryName
+          FROM categories c
+          JOIN (
+            SELECT CategoryID, MIN(ProductID) AS MinProductID
+            FROM products
+            WHERE Status = 'appear'
+            GROUP BY CategoryID
+          ) AS sub ON c.CategoryID = sub.CategoryID
+          JOIN products p ON p.ProductID = sub.MinProductID
+          ORDER BY c.CategoryID;
+        ";
+        
+        $result_cat = $conn_main->query($sql_cat);
+        $products = [];
+        if ($result_cat && $result_cat->num_rows > 0) {
+          while ($row = $result_cat->fetch_assoc()) {
+            $products[] = $row;
+          }
+        }
     ?>
 
     <section id="container_1" class="class">
@@ -573,10 +540,8 @@ $cart_count = count($cart_items);
       <div class="IMG">
         <?php foreach ($products as $product): ?>
           <div class="img__TREE">
-            <a
-              href="./pages/phan-loai.php?category_id=<?= $product['CategoryID'] ?>&category_name=<?= urlencode($product['CategoryName']) ?>">
-              <img class="THE-TREE" src=".<?= htmlspecialchars($product['ImageURL']) ?>"
-                alt="<?= htmlspecialchars($product['CategoryName']) ?>" />
+            <a href="./pages/phan-loai.php?category_id=<?= $product['CategoryID'] ?>&category_name=<?= urlencode($product['CategoryName']) ?>">
+              <img class="THE-TREE" src=".<?= htmlspecialchars($product['ImageURL']) ?>" alt="<?= htmlspecialchars($product['CategoryName']) ?>" />
               <p class="content_TREE-1"><?= htmlspecialchars($product['CategoryName']) ?></p>
             </a>
           </div>
@@ -584,59 +549,49 @@ $cart_count = count($cart_items);
       </div>
     </section>
 
-
-
     <section id="product1" class="section-p1">
-      <!-- SẢN PHẨM MỚI -->
       <h2 class="font_size">SẢN PHẨM MỚI</h2>
-
       <div class="pro-container">
         <?php
-        require_once './php-api/connectdb.php';
-        $conn = connect_db();
-
-        $limit = 8; // chỉ lấy đúng 8 sản phẩm
-
-        // Truy vấn sản phẩm giới hạn 8
-        $stmt = $conn->prepare('
-    SELECT ProductID, ProductName, Price, ImageURL 
-    FROM products 
-    WHERE Status = "appear"
-    ORDER BY ProductID DESC
-    LIMIT ?');
+        $limit = 8;
+        $stmt = $conn_main->prepare('SELECT ProductID, ProductName, Price, ImageURL FROM products WHERE Status = "appear" ORDER BY ProductID DESC LIMIT ?');
         $stmt->bind_param("i", $limit);
         $stmt->execute();
-        $result = $stmt->get_result();
+        $result_pro = $stmt->get_result();
 
-        // Hiển thị sản phẩm
-        if ($result && $result->num_rows > 0):
-          while ($product = $result->fetch_assoc()):
+        if ($result_pro && $result_pro->num_rows > 0):
+          while ($pro = $result_pro->fetch_assoc()):
         ?>
             <div class="pro">
-              <a style="text-decoration: none" href="./pages/user-sanpham.php?id=<?= htmlspecialchars($product['ProductID']) ?>">
-                <img style="width: 100%; height: 300px;" src=".<?= htmlspecialchars($product['ImageURL']) ?>" alt="<?= htmlspecialchars($product['ProductName']) ?>" />
+              <a style="text-decoration: none" href="./pages/user-sanpham.php?id=<?= htmlspecialchars($pro['ProductID']) ?>">
+                <img style="width: 100%; height: 300px;" src=".<?= htmlspecialchars($pro['ImageURL']) ?>" alt="<?= htmlspecialchars($pro['ProductName']) ?>" />
                 <div class="item_name__price">
-                  <p style="text-decoration: none; color: black; font-size: 20px; font-weight:bold"><?= htmlspecialchars($product['ProductName']) ?></p>
-                  <span style="font-size: 20px"><?= number_format($product['Price'], 0, ',', '.') ?> VND</span>
+                  <p style="text-decoration: none; color: black; font-size: 20px; font-weight:bold"><?= htmlspecialchars($pro['ProductName']) ?></p>
+                  <span style="font-size: 20px"><?= number_format($pro['Price'], 0, ',', '.') ?> VND</span>
                 </div>
               </a>
             </div>
         <?php
           endwhile;
         else:
-          echo "<p>Không có sản phẩm nào để hiển thị.</p>";
+          echo "<p style='text-align:center; width:100%;'>Không có sản phẩm nào để hiển thị.</p>";
         endif;
+        $stmt->close();
         ?>
-
       </div>
-
 
       <div class="for_more">
-        <a href="./pages/allproduct.php">
-          <button>Xem thêm</button>
-        </a>
+        <a href="./pages/allproduct.php"><button>Xem thêm</button></a>
       </div>
     </section>
+
+    <?php
+        // Đóng kết nối an toàn
+        $conn_main->close();
+    } else {
+        echo "<h3 style='text-align:center; margin: 50px 0;'>Không thể kết nối CSDL. Vui lòng thử lại sau.</h3>";
+    }
+    ?>
   </main>
 
   <footer class="footer">
@@ -692,7 +647,6 @@ $cart_count = count($cart_items);
     </div>
 
     <div class="copyright">
-      © 2021 c01.nhahodau
 
       <div class="policies">
         <a href="#">Điều khoản dịch vụ</a>
@@ -704,7 +658,10 @@ $cart_count = count($cart_items);
         <a href="#">Chính sách trợ năng</a>
       </div>
     </div>
-    <!-- xong footer  -->
+ <div class="disclaimer-notice" style="font-size: 13px; color: #333; text-align: center; padding: 15px 20px; border-top: 1px solid rgba(0,0,0,0.1); background-color: transparent; line-height: 1.5; margin-top: 20px;">
+  <strong>Tuyên bố miễn trừ trách nhiệm:</strong> Website The Tree được xây dựng với mục đích nghiên cứu, học tập và báo cáo đồ án, dưới sự hướng dẫn của giảng viên Cao Thái Phương Thanh. <br>
+  Mọi thông tin, sản phẩm và tính năng giao dịch trên website này đều là giả lập và không có giá trị thương mại thực tế. Chúng tôi cam kết không thu thập, không yêu cầu và tuyệt đối không lưu trữ các thông tin tài chính nhạy cảm thật của người truy cập.
+</div>
   </footer>
   <script>
     // search.js - Xử lý tìm kiếm cho website bán cây
@@ -1427,6 +1384,90 @@ $cart_count = count($cart_items);
       }
     }
   </script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const suggestBox = document.getElementById('searchSuggestions');
+    let timeoutId;
+
+    if (!searchInput || !suggestBox) return;
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(timeoutId);
+        const query = this.value.trim();
+
+        if (query.length === 0) {
+            suggestBox.style.display = 'none';
+            return;
+        }
+
+        timeoutId = setTimeout(() => {
+            fetch(`./src/php/api-search-suggest.php?q=${encodeURIComponent(query)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        let html = '';
+                        data.forEach(item => {
+                            let price = new Intl.NumberFormat('vi-VN').format(item.Price) + ' đ';
+                            html += `
+                                <a href="./pages/user-sanpham.php?id=${item.ProductID}" class="suggest-item">
+                                    <img src=".${item.ImageURL}" alt="${item.ProductName}">
+                                    <div class="suggest-info">
+                                        <span class="suggest-name">${item.ProductName}</span>
+                                        <span class="suggest-price">${price}</span>
+                                    </div>
+                                </a>
+                            `;
+                        });
+                        // Đã xóa nút Xem tất cả kết quả ở đây
+                        suggestBox.innerHTML = html;
+                        suggestBox.style.display = 'block';
+                    } else {
+                        suggestBox.innerHTML = '<div style="padding: 15px; color: #888; text-align: center;">Không tìm thấy sản phẩm nào phù hợp...</div>';
+                        suggestBox.style.display = 'block';
+                    }
+                })
+                .catch(err => console.error('Lỗi search:', err));
+        }, 300);
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !suggestBox.contains(e.target)) {
+            suggestBox.style.display = 'none';
+        }
+    });
+});
+</script>
+    <style>
+/* CSS CHO KHUNG GỢI Ý TÌM KIẾM */
+.search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 0 0 5px 5px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    z-index: 9999;
+    max-height: 350px;
+    overflow-y: auto;
+    display: none;
+}
+.suggest-item {
+    display: flex; align-items: center; padding: 10px;
+    text-decoration: none; color: #333; border-bottom: 1px solid #eee;
+    transition: background 0.2s; text-align: left;
+}
+.suggest-item:hover { background: #f1f8f3; }
+.suggest-item img {
+    width: 45px; height: 45px; object-fit: cover;
+    border-radius: 4px; margin-right: 12px;
+}
+.suggest-info { display: flex; flex-direction: column; }
+.suggest-name { font-weight: bold; font-size: 14px; margin-bottom: 3px; color: #333; }
+.suggest-price { color: #28a745; font-size: 13px; font-weight: bold; }
+</style>
 </body>
 
 </html>
