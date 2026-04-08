@@ -1,26 +1,69 @@
+/**
+ * 1. Hàm cưỡng ép giá trị (CỰC MẠNH)
+ * Chạy ngay khi khách vừa gõ bất kỳ ký tự nào
+ */
+function forceNumericMinMax(input) {
+  const max = parseInt(input.getAttribute("max"), 10) || 9999;
+  const min = parseInt(input.getAttribute("min"), 10) || 1;
+  let val = parseInt(input.value);
+
+  if (val > max) {
+    // Dùng setTimeout để đè lên hành động vẽ của trình duyệt
+    setTimeout(() => {
+      input.value = max;
+      // Thông báo nhẹ để khách biết
+      console.log("Đã ép về số lượng tồn kho tối đa: " + max);
+    }, 0);
+    alert("Sản phẩm này chỉ còn tối đa " + max + " cây trong kho!");
+  } else if (val < min) {
+    input.value = min;
+  }
+}
+
+/**
+ * 2. Hàm xử lý cập nhật khi khách rời ô nhập (onchange)
+ */
+function updateQuantityInput(input) {
+  const maxVal = parseInt(input.getAttribute("max"), 10) || 9999;
+  let val = parseInt(input.value);
+
+  if (val > maxVal) {
+    val = maxVal;
+    input.value = val;
+  }
+
+  const form = input.closest(".update-form");
+  const productId = form.querySelector("input[name='update_product_id']").value;
+  sendUpdateQuantity(productId, val, input, val);
+}
+
+/**
+ * 3. Hàm xử lý nút bấm + và -
+ */
 function changeQuantity(button, delta) {
-  // Lấy phần tử input chứa số lượng
-  const quantityInput = button
-    .closest(".update-form")
-    .querySelector(".quantity-input");
-  let currentQuantity = parseInt(quantityInput.value, 10);
-  const productId = button
-    .closest(".update-form")
-    .querySelector("input[name='update_product_id']").value;
+  const input = button.closest(".update-form").querySelector(".quantity-input");
+  const max = parseInt(input.getAttribute("max"), 10) || 9999;
+  let current = parseInt(input.value, 10) || 1;
+  let newValue = current + delta;
 
-  // Tính toán số lượng mới
-  let newQuantity = currentQuantity + delta;
+  if (newValue < 1) return;
+  if (newValue > max) {
+    alert("Kho chỉ còn tối đa " + max + " sản phẩm!");
+    return;
+  }
 
-  // Kiểm tra số lượng mới không nhỏ hơn 1
-  if (newQuantity < 1) return;
+  input.value = newValue;
+  const productId = button.closest(".update-form").querySelector("input[name='update_product_id']").value;
+  sendUpdateQuantity(productId, newValue, input, current);
+}
 
-  // Cập nhật giá trị số lượng trong ô input
-  quantityInput.value = newQuantity;
-
-  // Gửi dữ liệu lên server để cập nhật giỏ hàng (có thể thêm AJAX để cập nhật vào session)
+/**
+ * 4. Gửi dữ liệu lên Server
+ */
+function sendUpdateQuantity(productId, quantity, inputElement, fallbackValue) {
   const formData = new FormData();
   formData.append("product_id", productId);
-  formData.append("quantity", newQuantity);
+  formData.append("quantity", quantity);
 
   fetch("cap-nhat-so-luong.php", {
     method: "POST",
@@ -29,30 +72,29 @@ function changeQuantity(button, delta) {
     .then((res) => res.json())
     .then((data) => {
       if (data.success) {
-        // Cập nhật lại tổng giỏ hàng
         updateCartTotal();
       } else {
-        alert("Cập nhật thất bại: " + data.message);
+        alert(data.message);
+        inputElement.value = fallbackValue;
+        updateCartTotal();
       }
     })
-    .catch((err) => {
-      console.error("Lỗi:", err);
-    });
+    .catch((err) => console.error("Lỗi:", err));
 }
 
+/**
+ * 5. Cập nhật tổng tiền hiển thị
+ */
 function updateCartTotal() {
   let total = 0;
   document.querySelectorAll(".order").forEach((order) => {
-    const quantityInput = order.querySelector(".quantity-input");
-    // Lấy giá sản phẩm từ data-price
-    const price = parseFloat(quantityInput.getAttribute("data-price")) || 0;
-    const quantity = parseInt(quantityInput.value) || 1;
-    const productTotal = price * quantity;
-    total += productTotal;
+    const input = order.querySelector(".quantity-input");
+    if (input) {
+      const price = parseFloat(input.getAttribute("data-price")) || 0;
+      const qty = parseInt(input.value) || 0;
+      total += price * qty;
+    }
   });
-  // Cập nhật tổng tiền của giỏ hàng
-  const totalElement = document.getElementById("total-price");
-  if (totalElement) {
-    totalElement.textContent = total.toLocaleString("vi-VN") + " VNĐ";
-  }
+  const totalEl = document.getElementById("total-price");
+  if (totalEl) totalEl.textContent = total.toLocaleString("vi-VN") + " VNĐ";
 }
